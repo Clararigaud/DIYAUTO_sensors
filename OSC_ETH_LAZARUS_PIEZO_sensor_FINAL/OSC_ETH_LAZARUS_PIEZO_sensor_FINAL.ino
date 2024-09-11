@@ -147,6 +147,7 @@ void readConfigFile(fs::FS &fs, const char * path) {
 void Wake() {
   OscEther.update();
 }
+
 void setup() {
 
   Wire.begin();
@@ -160,7 +161,7 @@ void setup() {
     return;
   }
 
-  readConfigFile(SD_MMC, "/config.ini");
+  readConfigFile(SD_MMC, "/config_piezo.ini");
   if (debug_juju) {
     host = "192.168.0.52";
     path1 = "/test";
@@ -213,7 +214,6 @@ void setup() {
 }
 
 void loop() {
-
   //Lecture des ADC
   a0 = map(readChannel_1(ADS1115_COMP_0_GND), 0, gain1, 0, 1);
   a1 = map(readChannel_1(ADS1115_COMP_1_GND), 0, gain2, 0, 1);

@@ -9,6 +9,7 @@
 //ADC converter I2C
 #define I2C_ADDRESS_1 0x48
 #define I2C_ADDRESS_2 0x49
+
 Ticker Wake_up;
 ADS1115_WE adc_1 = ADS1115_WE(I2C_ADDRESS_1);
 ADS1115_WE adc_2 = ADS1115_WE(I2C_ADDRESS_2);
@@ -69,7 +70,7 @@ float msg5 = 0.0;
 float msg6 = 0.0;
 float msg7 = 0.0;
 float msg8 = 0.0;
-int refresh = 500;
+int refresh = 100;
 
 IPAddress stringToIPAddress(String ipAddressString) {
   // Split the string into four parts using '.' as delimiter
@@ -178,52 +179,20 @@ void readConfigFile(fs::FS& fs, const char* path) {
   Serial.print("refresh frequency in millis : ");
   Serial.println(refresh);
 }
-void WiFiEvent(WiFiEvent_t event) {
-  switch (event) {
-    case ARDUINO_EVENT_ETH_START:
-      Serial.println("ETH Started");
-      //set eth hostname here
-      ETH.setHostname("esp32-ethernet");
-      break;
-    case ARDUINO_EVENT_ETH_CONNECTED:
-      Serial.println("ETH Connected");
-      break;
-    case ARDUINO_EVENT_ETH_GOT_IP:
-      Serial.print("ETH MAC: ");
-      Serial.print(ETH.macAddress());
-      Serial.print(", IPv4: ");
-      Serial.print(ETH.localIP());
-      if (ETH.fullDuplex()) {
-        Serial.print(", FULL_DUPLEX");
-      }
-      Serial.print(", ");
-      Serial.print(ETH.linkSpeed());
-      Serial.println("Mbps");
-      eth_connected = true;
-      break;
-    case ARDUINO_EVENT_ETH_DISCONNECTED:
-      Serial.println("ETH Disconnected");
-      eth_connected = false;
-      break;
-    case ARDUINO_EVENT_ETH_STOP:
-      Serial.println("ETH Stopped");
-      eth_connected = false;
-      break;
-    default:
-      break;
-  }
-}
-void Wake() {
-  OscEther.update();
-}
-void setup() {
 
+void Wake() {
+  msg = 0.0;
+  OscEther.post();
+  Serial.println("PING");
+}
+
+void setup() {
   Wire.begin();
   Serial.begin(115200);
-  Wake_up.attach_ms(50000, Wake);
   delay(2000);
   //Read config.ini file in SD MMC card
-
+  Wake_up.attach_ms(50000, Wake);
+  
   if (!SD_MMC.begin()) {
     Serial.println("Card Mount Failed");
     return;
@@ -252,7 +221,7 @@ void setup() {
   adc_2.setVoltageRange_mV(ADS1115_RANGE_6144);
 
   // Ethernet stuff
-  //WiFi.onEvent(WiFiEvent);
+
   ETH.begin();
   ETH.begin(ip, gateway, subnet);
   Serial.print("Host Target Ip : ");
@@ -267,10 +236,9 @@ void setup() {
 }
 
 void loop() {
-
   //Lecture des ADC
   averageFlex_1.push(readChannel_1(ADS1115_COMP_0_GND));
-  double value_1 = averageFlex_1.get() - averageFlex_1[0];
+  float value_1 = averageFlex_1.get() - averageFlex_1[0];
 
   averageFlex_2.push(readChannel_1(ADS1115_COMP_1_GND));
   float value_2 = averageFlex_2.get() - averageFlex_2[0];
@@ -298,7 +266,6 @@ void loop() {
     OscEther.post();
   }
 
-
   Serial.print(value_1);
   Serial.print(",");
   Serial.print(value_2);
@@ -308,7 +275,6 @@ void loop() {
   Serial.println(value_4);
 }
 
-
 float readChannel_2(ADS1115_MUX channel) {
   int voltage = 0;
   adc_2.setCompareChannels(channel);
@@ -317,7 +283,6 @@ float readChannel_2(ADS1115_MUX channel) {
   voltage = adc_2.getResult_mV();  // alternative: getResult_mV for Millivolt
   return voltage;
 }
-
 
 float readChannel_1(ADS1115_MUX channel) {
   int voltage = 0;

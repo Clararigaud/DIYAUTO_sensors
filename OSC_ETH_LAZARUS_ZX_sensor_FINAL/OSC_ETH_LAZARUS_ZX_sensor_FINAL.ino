@@ -123,19 +123,23 @@ void readConfigFile(fs::FS& fs, const char* path) {
   Serial.print("refresh frequency in millis : ");
   Serial.println(refresh);
 }
+
 void Wake(){
-  OscEther.update();
+  f_X2 = random(100)/100.0;
+  f_Z2 = random(100)/100.0;
+  OscEther.post();
 }
+
 void setup() {
   Serial.begin(115200);
-  Wake_up.attach_ms(50000, Wake);
+  Wake_up.attach_ms(60000, Wake);
   delay(2000);
   //Read config.ini file in SD MMC card
   if (!SD_MMC.begin()) {
     Serial.println("Card Mount Failed");
     return;
   }
-  readConfigFile(SD_MMC, "/config.ini");
+  readConfigFile(SD_MMC, "/config_ZX.ini");
 
   // Ethernet stuff
   ETH.begin();
@@ -184,7 +188,7 @@ void loop() {
     x_pos2 = zx_sensor2.readX();
     if (x_pos2 != ZX_ERROR) {
       x_pos2 = map(x_pos2, 0, 240, 0, 100);
-      f_X2= x_pos2 / 100.0;
+      f_X2 = x_pos2 / 100.0;
     }
     z_pos2 = zx_sensor2.readZ();
     if (z_pos2 != ZX_ERROR) {
