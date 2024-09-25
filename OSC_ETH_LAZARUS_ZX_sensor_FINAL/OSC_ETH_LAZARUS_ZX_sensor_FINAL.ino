@@ -17,6 +17,12 @@ int d0 = 37;
 int d1 = 38;
 int d2 = 33;
 int d3 = 39;
+
+
+// declenchement du rest
+unsigned long previousMillis = 0;
+long interval = 9000;
+int reset_interval = 1000;
 // Constants
 const int ZX_ADDR = 0x10;  // ZX Sensor I2C address
 const int ZX_ADDR2 = 0x11;
@@ -101,6 +107,8 @@ void readConfigFile(fs::FS& fs, const char* path) {
   path3 = config_array[10];
   path4 = config_array[11];
   refresh = config_array[12].toInt();
+  reset_interval = config_array[13].toInt();
+  interval = reset_interval * 60 * 1000;
 
   Serial.print("Ip : ");
   Serial.println(ip);
@@ -122,17 +130,12 @@ void readConfigFile(fs::FS& fs, const char* path) {
   Serial.println(path4);
   Serial.print("refresh frequency in millis : ");
   Serial.println(refresh);
-}
-
-void Wake(){
-  f_X2 = random(100)/100.0;
-  f_Z2 = random(100)/100.0;
-  OscEther.post();
+  Serial.print("Interval reset in millis: ");
+  Serial.println(interval);
 }
 
 void setup() {
   Serial.begin(115200);
-  Wake_up.attach_ms(60000, Wake);
   delay(2000);
   //Read config.ini file in SD MMC card
   if (!SD_MMC.begin()) {
@@ -168,7 +171,11 @@ void setup() {
 }
 
 void loop() {
-
+  // mise en route du timer reset
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    ESP.restart();
+  }
   if (zx_sensor.positionAvailable()) {
     x_pos = zx_sensor.readX();
     if (x_pos != ZX_ERROR) {
@@ -180,7 +187,10 @@ void loop() {
       z_pos = map(z_pos, 0, 240, 0, 100);
       f_Z = z_pos / 100.0;
     }
-    Serial.println("send");
+    Serial.print(f_X);
+    Serial.print(", ");
+    Serial.println(f_Z);
+    previousMillis = currentMillis;
     OscEther.post();  // to publish osc
   }
 
@@ -195,7 +205,10 @@ void loop() {
       z_pos2 = map(z_pos2, 0, 240, 0, 100);
       f_Z2 = z_pos2 / 100.0;
     }
-    Serial.println("send2");
+    previousMillis = currentMillis;
+    Serial.print(f_X2);
+    Serial.print(", ");
+    Serial.println(f_Z2);
     OscEther.post();  // to publish osc
   }
 }
