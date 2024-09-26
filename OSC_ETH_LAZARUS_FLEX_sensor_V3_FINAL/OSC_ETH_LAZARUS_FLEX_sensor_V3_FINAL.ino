@@ -9,8 +9,6 @@
 //ADC converter I2C
 #define I2C_ADDRESS_1 0x48
 #define I2C_ADDRESS_2 0x49
-
-Ticker Wake_up;
 ADS1115_WE adc_1 = ADS1115_WE(I2C_ADDRESS_1);
 ADS1115_WE adc_2 = ADS1115_WE(I2C_ADDRESS_2);
 
@@ -19,7 +17,10 @@ DataTomeMvAvg<unsigned, unsigned long> averageFlex_1(50);
 DataTomeMvAvg<unsigned, unsigned long> averageFlex_2(50);
 DataTomeMvAvg<unsigned, unsigned long> averageFlex_3(50);
 DataTomeMvAvg<unsigned, unsigned long> averageFlex_4(50);
-
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_5(50);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_6(50);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_7(50);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_8(50);
 // SD MMC lib
 #include "FS.h"
 #include "SD_MMC.h"
@@ -34,7 +35,10 @@ int d1 = 38;
 int d2 = 33;
 int d3 = 39;
 
-// Global Variables
+// declenchement du rest
+unsigned long previousMillis = 0;
+long interval = 9000;
+int reset_interval=1000;
 
 // Ethernet stuff
 IPAddress ip(192, 168, 1, 201);
@@ -133,6 +137,8 @@ void readConfigFile(fs::FS& fs, const char* path) {
   msg6 = config_array[20].toFloat();
   msg7 = config_array[21].toFloat();
   msg8 = config_array[22].toFloat();
+  reset_interval = config_array[23].toInt();
+  interval = reset_interval*60*1000;
 
   Serial.print("Ip : ");
   Serial.println(ip);
@@ -178,12 +184,43 @@ void readConfigFile(fs::FS& fs, const char* path) {
   Serial.println(msg8);
   Serial.print("refresh frequency in millis : ");
   Serial.println(refresh);
+  Serial.print("Interval reset in millis: ");
+  Serial.println(interval);
 }
-
-void Wake() {
-  msg = 0.0;
-  OscEther.post();
-  Serial.println("PING");
+void WiFiEvent(WiFiEvent_t event) {
+  switch (event) {
+    case ARDUINO_EVENT_ETH_START:
+      Serial.println("ETH Started");
+      //set eth hostname here
+      ETH.setHostname("esp32-ethernet");
+      break;
+    case ARDUINO_EVENT_ETH_CONNECTED:
+      Serial.println("ETH Connected");
+      break;
+    case ARDUINO_EVENT_ETH_GOT_IP:
+      Serial.print("ETH MAC: ");
+      Serial.print(ETH.macAddress());
+      Serial.print(", IPv4: ");
+      Serial.print(ETH.localIP());
+      if (ETH.fullDuplex()) {
+        Serial.print(", FULL_DUPLEX");
+      }
+      Serial.print(", ");
+      Serial.print(ETH.linkSpeed());
+      Serial.println("Mbps");
+      eth_connected = true;
+      break;
+    case ARDUINO_EVENT_ETH_DISCONNECTED:
+      Serial.println("ETH Disconnected");
+      eth_connected = false;
+      break;
+    case ARDUINO_EVENT_ETH_STOP:
+      Serial.println("ETH Stopped");
+      eth_connected = false;
+      break;
+    default:
+      break;
+  }
 }
 
 void setup() {
@@ -191,8 +228,7 @@ void setup() {
   Serial.begin(115200);
   delay(2000);
   //Read config.ini file in SD MMC card
-  Wake_up.attach_ms(50000, Wake);
-  
+
   if (!SD_MMC.begin()) {
     Serial.println("Card Mount Failed");
     return;
@@ -221,7 +257,7 @@ void setup() {
   adc_2.setVoltageRange_mV(ADS1115_RANGE_6144);
 
   // Ethernet stuff
-
+  //WiFi.onEvent(WiFiEvent);
   ETH.begin();
   ETH.begin(ip, gateway, subnet);
   Serial.print("Host Target Ip : ");
@@ -236,6 +272,11 @@ void setup() {
 }
 
 void loop() {
+// mise en route du timer reset
+unsigned long currentMillis = millis();
+if (currentMillis - previousMillis >= interval) {
+  ESP.restart();
+}
   //Lecture des ADC
   averageFlex_1.push(readChannel_1(ADS1115_COMP_0_GND));
   float value_1 = averageFlex_1.get() - averageFlex_1[0];
@@ -249,20 +290,58 @@ void loop() {
   averageFlex_4.push(readChannel_1(ADS1115_COMP_3_GND));
   float value_4 = averageFlex_4.get() - averageFlex_4[0];
 
+  averageFlex_5.push(readChannel_2(ADS1115_COMP_0_GND));
+  float value_5 = averageFlex_5.get() - averageFlex_5[0];
+
+  averageFlex_6.push(readChannel_2(ADS1115_COMP_1_GND));
+  float value_6 = averageFlex_6.get() - averageFlex_6[0];
+
+  averageFlex_7.push(readChannel_2(ADS1115_COMP_2_GND));
+  float value_7 = averageFlex_7.get() - averageFlex_7[0];
+
+  averageFlex_8.push(readChannel_2(ADS1115_COMP_3_GND));
+  float value_8 = averageFlex_8.get() - averageFlex_8[0];
+
   if (value_1 > gain1 && value_1 < 1000.0) {
     msg = constrain(msg1, 0.0, 1.0);
+    previousMillis = currentMillis;
     OscEther.post();
   }
   if (value_2 > gain2 && value_2 < 1000.0) {
     msg = constrain(msg2, 0.0, 1.0);
+    previousMillis = currentMillis;
     OscEther.post();
   }
   if (value_3 > gain3 && value_3 < 1000.0) {
     msg = constrain(msg3, 0.0, 1.0);
+    previousMillis = currentMillis;
     OscEther.post();
   }
   if (value_4 > gain4 && value_4 < 1000.0) {
     msg = constrain(msg4, 0.0, 1.0);
+    previousMillis = currentMillis;
+    OscEther.post();
+  }
+
+ if (value_5 > gain5 && value_5 < 1000.0) {
+    msg = constrain(msg5, 0.0, 1.0);
+    previousMillis = currentMillis;
+    OscEther.post();
+  }
+  if (value_6 > gain6 && value_6 < 1000.0) {
+    msg = constrain(msg6, 0.0, 1.0);
+    previousMillis = currentMillis;
+    OscEther.post();
+  }
+  if (value_7 > gain7 && value_7 < 1000.0) {
+    msg = constrain(msg7, 0.0, 1.0);
+    previousMillis = currentMillis;
+    OscEther.post();
+  }
+  if (value_8 > gain8 && value_8 < 1000.0) {
+    msg = constrain(msg8, 0.0, 1.0);
+    previousMillis = currentMillis;
+    Serial.println(msg);
     OscEther.post();
   }
 
@@ -272,8 +351,17 @@ void loop() {
   Serial.print(",");
   Serial.print(value_3);
   Serial.print(",");
-  Serial.println(value_4);
+  Serial.print(value_4);
+  Serial.print(",");
+  Serial.print(value_5);
+  Serial.print(",");
+  Serial.print(value_6);
+  Serial.print(",");
+  Serial.print(value_7);
+  Serial.print(",");
+  Serial.println(value_8);
 }
+
 
 float readChannel_2(ADS1115_MUX channel) {
   int voltage = 0;
@@ -283,6 +371,7 @@ float readChannel_2(ADS1115_MUX channel) {
   voltage = adc_2.getResult_mV();  // alternative: getResult_mV for Millivolt
   return voltage;
 }
+
 
 float readChannel_1(ADS1115_MUX channel) {
   int voltage = 0;
