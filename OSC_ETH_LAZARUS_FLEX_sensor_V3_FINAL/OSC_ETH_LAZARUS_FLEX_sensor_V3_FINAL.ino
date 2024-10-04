@@ -13,14 +13,14 @@ ADS1115_WE adc_1 = ADS1115_WE(I2C_ADDRESS_1);
 ADS1115_WE adc_2 = ADS1115_WE(I2C_ADDRESS_2);
 
 // Average Lib
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_1(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_2(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_3(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_4(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_5(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_6(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_7(50);
-DataTomeMvAvg<unsigned, unsigned long> averageFlex_8(50);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_1(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_2(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_3(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_4(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_5(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_6(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_7(20);
+DataTomeMvAvg<unsigned, unsigned long> averageFlex_8(20);
 // SD MMC lib
 #include "FS.h"
 #include "SD_MMC.h"
@@ -360,6 +360,10 @@ if (currentMillis - previousMillis >= interval) {
   Serial.print(value_7);
   Serial.print(",");
   Serial.println(value_8);
+  // Serial.print("averageflex_2[0]");
+  // Serial.println(averageFlex_2[0]);
+  // Serial.print("averageFlex_2.get()");
+  // Serial.println(averageFlex_2.get());
 }
 
 

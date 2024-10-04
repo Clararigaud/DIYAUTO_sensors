@@ -65,7 +65,7 @@ int gain8 = 0;
 float msg = 0.0;
 float msg1 = 0.0;
 float msg2 = 0.0;
-float msg3 = 0.0;
+int msg3 = 0;
 float msg4 = 0.0;
 float msg5 = 0.0;
 float msg6 = 0.0;
@@ -81,7 +81,7 @@ boolean first_etal = true;
 
 float msg1A = 0.0;
 float msg2A = 0.0;
-float msg3A = 0.0;
+int msg3A = 0;
 float msg4A = 0.0;
 float msg5A = 0.0;
 float msg6A = 0.0;
@@ -140,7 +140,7 @@ void readConfigFile(fs::FS& fs, const char* path) {
   gain8 = config_array[13].toInt();
   msg1 = config_array[14].toFloat();
   msg2 = config_array[15].toFloat();
-  msg3 = config_array[16].toFloat();
+  msg3 = config_array[16].toInt();
   msg4 = config_array[17].toFloat();
   msg5 = config_array[18].toFloat();
   msg6 = config_array[19].toFloat();
@@ -321,6 +321,7 @@ void loop() {
     path = path2;
 
     Serial.println("bt 1");
+    Serial.println(msg1A);
   } else {
     msg1A = 0;
   }
@@ -332,6 +333,7 @@ void loop() {
     path = path3;
 
     Serial.println("bt 2");
+    Serial.println(msg2A);
   } else {
     msg2A = 0;
   }
@@ -342,6 +344,7 @@ void loop() {
     msg3A = msg3;
 
     Serial.println("bt 3");
+    Serial.println(msg3A);
   } else {
     msg3A = 0;
   }
@@ -352,6 +355,7 @@ void loop() {
     msg4A = msg4;
 
     Serial.println("bt 4");
+    Serial.println(msg4A);
   } else {
     msg4A = 0;
   }
@@ -361,6 +365,7 @@ void loop() {
     msg5A = msg5;
 
     Serial.println("bt 5");
+    Serial.println(msg5A);
   } else {
     msg5A = 0;
   }
@@ -371,6 +376,7 @@ void loop() {
     msg6A = msg6;
 
     Serial.println("bt 6");
+    Serial.println(msg6A);
   } else {
     msg6A = 0;
   }
