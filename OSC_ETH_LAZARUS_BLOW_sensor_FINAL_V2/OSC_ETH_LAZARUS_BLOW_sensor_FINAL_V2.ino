@@ -82,6 +82,7 @@ boolean first_etal = true;
 float msg1A = 0.0;
 float msg2A = 0.0;
 int msg3A = 0;
+int msg3A_temp = 0;
 float msg4A = 0.0;
 float msg5A = 0.0;
 float msg6A = 0.0;
@@ -167,7 +168,7 @@ void readConfigFile(fs::FS& fs, const char* path) {
   Serial.println(path2);
   Serial.print("path 3 : ");
   Serial.println(path3);
-  Serial.print("path 4 : ");
+  Serial.print("morse path 4 : ");
   Serial.println(path4);
   Serial.print("path 5 : ");
   Serial.println(path5);
@@ -294,8 +295,6 @@ void setup() {
     ->setIntervalMsec(refresh);
   OscEther.publish(host, publish_port, path3, msg2A)
     ->setIntervalMsec(refresh);
-  OscEther.publish(host, publish_port, path4, msg3A)
-    ->setIntervalMsec(refresh);
   OscEther.publish(host, publish_port, path5, msg4A)
     ->setIntervalMsec(refresh);
   OscEther.publish(host, publish_port, path6, msg5A)
@@ -341,12 +340,16 @@ void loop() {
   if (readChannel_1(ADS1115_COMP_2_GND) > thresold) {
     previousMillis = currentMillis;
     //send msg
-    msg3A = msg3;
+    msg3A_temp = msg3;
+  } else {
+    msg3A_temp = 0;
+  }
 
+  if (msg3A != msg3A_temp) {
+    msg3A = msg3A_temp;
     Serial.println("bt 3");
     Serial.println(msg3A);
-  } else {
-    msg3A = 0;
+    OscEther.publish(host, publish_port, path4, msg3A);
   }
 
   if (readChannel_1(ADS1115_COMP_3_GND) > thresold) {
@@ -408,8 +411,6 @@ void loop() {
 
   path = path1;
   Serial.println(msg);
-
-
 
   OscEther.post();
 }
